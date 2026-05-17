@@ -69,6 +69,21 @@ export function calcStrikeRow(currentPrice, strikePrice, midpoint) {
   return { pctBelow, breakeven, beAbovePct }
 }
 
+export function calcCAGR({ breakeven, currentPrice, expiryDate }) {
+  const be = parseFloat(breakeven)
+  const price = parseFloat(currentPrice)
+  if (!be || !price || !expiryDate) return null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expiry = new Date(expiryDate + 'T00:00:00')
+  const days = Math.round((expiry - today) / (1000 * 60 * 60 * 24))
+  if (days <= 0) return null
+
+  const cagr = Math.pow(be / price, 365 / days) - 1
+  return { cagr, days }
+}
+
 export function beColor(pct) {
   if (pct <= 0.05) return 'green'
   if (pct <= 0.10) return 'yellow'

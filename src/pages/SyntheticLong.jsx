@@ -1,8 +1,18 @@
-import { useState } from 'react'
 import InputField from '../components/InputField'
 import ResultRow from '../components/ResultRow'
 import Card from '../components/Card'
 import { calcSyntheticLong, fmtPct, fmtDollar } from '../utils/calculations'
+import { useLocalState } from '../hooks/useLocalState'
+
+const INITIAL = {
+  ticker: '',
+  currentPrice: '',
+  callPremium: '',
+  putPremium: '',
+  strikePrice: '',
+  contracts: '1',
+  sharesPerContract: '100',
+}
 
 function IVBar({ ivPct }) {
   const pct = Math.min(Math.max(ivPct * 100, 0), 100)
@@ -25,15 +35,7 @@ function IVBar({ ivPct }) {
 }
 
 export default function SyntheticLong() {
-  const [fields, setFields] = useState({
-    ticker: '',
-    currentPrice: '',
-    callPremium: '',
-    putPremium: '',
-    strikePrice: '',
-    contracts: '1',
-    sharesPerContract: '100',
-  })
+  const [fields, setFields, resetFields] = useLocalState('synthetic', INITIAL)
 
   const set = key => val => setFields(f => ({ ...f, [key]: val }))
 
@@ -46,10 +48,19 @@ export default function SyntheticLong() {
         <strong>Synthetic Long</strong> = Buy a Call + Sell a Put at the same strike. Net cost = Call Premium − Put Premium.
       </div>
 
-      <Card title="Inputs">
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Inputs</h2>
+          <button
+            onClick={resetFields}
+            className="text-xs text-slate-500 hover:text-red-400 border border-slate-700 hover:border-red-800 px-2.5 py-1 rounded-lg transition-colors bg-transparent cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
-            <InputField label="Ticker Symbol" value={fields.ticker} onChange={set('ticker')} placeholder="e.g. DRI" />
+            <InputField label="Ticker Symbol" value={fields.ticker} onChange={set('ticker')} placeholder="e.g. DRI" type="text" uppercase />
           </div>
           <InputField label="Current Price" value={fields.currentPrice} onChange={set('currentPrice')} prefix="$" placeholder="206.17" />
           <InputField label="Strike Price" value={fields.strikePrice} onChange={set('strikePrice')} prefix="$" placeholder="200.00" />

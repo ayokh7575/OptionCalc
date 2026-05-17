@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import InputField from '../components/InputField'
 import Card from '../components/Card'
 import { calcStrikeRow, fmtPct, fmtDollar, beColor } from '../utils/calculations'
+import { useLocalState } from '../hooks/useLocalState'
 
 const BADGE = {
   green: 'bg-emerald-900/60 text-emerald-400 border border-emerald-700',
@@ -10,17 +10,17 @@ const BADGE = {
 }
 
 const DEFAULT_ROWS = Array(8).fill(null).map(() => ({ strike: '', midpoint: '' }))
+const INITIAL = { currentPrice: '', rows: DEFAULT_ROWS }
 
 export default function StrikeTable() {
-  const [currentPrice, setCurrentPrice] = useState('')
-  const [rows, setRows] = useState(DEFAULT_ROWS)
+  const [state, setState, resetState] = useLocalState('strikes', INITIAL)
+  const { currentPrice, rows } = state
 
-  const updateRow = (i, key, val) => {
-    setRows(r => r.map((row, idx) => idx === i ? { ...row, [key]: val } : row))
-  }
-
-  const addRow = () => setRows(r => [...r, { strike: '', midpoint: '' }])
-  const removeRow = i => setRows(r => r.filter((_, idx) => idx !== i))
+  const setPrice = val => setState(s => ({ ...s, currentPrice: val }))
+  const updateRow = (i, key, val) =>
+    setState(s => ({ ...s, rows: s.rows.map((row, idx) => idx === i ? { ...row, [key]: val } : row) }))
+  const addRow = () => setState(s => ({ ...s, rows: [...s.rows, { strike: '', midpoint: '' }] }))
+  const removeRow = i => setState(s => ({ ...s, rows: s.rows.filter((_, idx) => idx !== i) }))
 
   const computed = rows.map(row =>
     row.strike && row.midpoint && currentPrice
@@ -40,13 +40,22 @@ export default function StrikeTable() {
         <InputField
           label="Current Share Price"
           value={currentPrice}
-          onChange={setCurrentPrice}
+          onChange={setPrice}
           prefix="$"
           placeholder="206.17"
         />
       </Card>
 
-      <Card title="Strike Analysis">
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Strike Analysis</h2>
+          <button
+            onClick={resetState}
+            className="text-xs text-slate-500 hover:text-red-400 border border-slate-700 hover:border-red-800 px-2.5 py-1 rounded-lg transition-colors bg-transparent cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
         <div className="space-y-2 mb-3">
           {rows.map((row, i) => (
             <div key={i} className="flex gap-2 items-end">
@@ -76,14 +85,14 @@ export default function StrikeTable() {
               </div>
               <button
                 onClick={() => removeRow(i)}
-                className="mb-0 pb-2.5 text-slate-600 hover:text-red-400 text-lg leading-none"
+                className="mb-0 pb-2.5 text-slate-600 hover:text-red-400 text-lg leading-none bg-transparent border-0 cursor-pointer"
               >×</button>
             </div>
           ))}
         </div>
         <button
           onClick={addRow}
-          className="w-full py-2 text-sm text-indigo-400 border border-dashed border-indigo-700/50 rounded-lg hover:border-indigo-500 hover:text-indigo-300 transition-colors"
+          className="w-full py-2 text-sm text-indigo-400 border border-dashed border-indigo-700/50 rounded-lg hover:border-indigo-500 hover:text-indigo-300 transition-colors bg-transparent cursor-pointer"
         >
           + Add Row
         </button>
